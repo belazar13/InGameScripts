@@ -27,7 +27,7 @@ public void Main(string argument, UpdateType updateSource)
 {
     ProcessMessages();
 
-    if (Tick++ < 120)
+    if (Tick++ < 60)
     {
         return;
     }
@@ -54,12 +54,6 @@ void ProcessMessages()
             MyIGCMessage message = listener.AcceptMessage();
             string messagetext = message.Data.ToString();
             string messagetag = message.Tag;
-
-            // if (LCD != null)
-            // {
-            //     LCD.WriteText("tag:" + messagetag + "\n", false);
-            //     LCD.WriteText("txt:" + messagetext + "\n", true);
-            // }
 
             string[] msg = messagetext.Split(';');
             switch (msg[0])

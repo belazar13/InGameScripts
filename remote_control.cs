@@ -6,6 +6,7 @@ IMyTextPanel LCD2;
 MyDetectedEntityInfo DetectedObject;
 
 string tagChannel = "ch1";
+Queue<string> TorpedoList;
 
 //Конструктор скрипта
 // ------------------------------------------
@@ -67,6 +68,7 @@ void ProcessMessages()
             switch (msg[0])
             {
                 case "TorpedoStatus":
+                    TorpedoList.Enqueue(msg[1]);
                     if (LCD2 != null)
                     {
                         LCD2.WriteText(msg[1] + " OK\n", true);
@@ -78,6 +80,19 @@ void ProcessMessages()
 }
 void Start(string torpedoID)
 {
+    if (torpedoID == "next")
+    {
+        if (TorpedoList.Count > 0)
+        {
+            torpedoID = TorpedoList.Dequeue();
+        }
+        else
+        {
+            LCD2.WriteText("All torpedos used\n", false);
+            return;
+        }
+    }
+
     string msg = "Start;"+torpedoID;
     IGC.SendBroadcastMessage(tagChannel, msg, TransmissionDistance.TransmissionDistanceMax);
 }
@@ -88,6 +103,8 @@ void Prepare()
     msg += DetectedObject.Position.X.ToString() + ";";
     msg += DetectedObject.Position.Y.ToString() + ";";
     msg += DetectedObject.Position.Z.ToString() + ";";
+
+    TorpedoList = new Queue<string>();
 
     //Antenna.TransmitMessage(msg, MyTransmitTarget.Owned);
     IGC.SendBroadcastMessage(tagChannel, msg, TransmissionDistance.TransmissionDistanceMax);
