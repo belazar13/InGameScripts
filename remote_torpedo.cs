@@ -21,6 +21,8 @@ public Program()
     IGC.RegisterBroadcastListener(tagChannel);
     Runtime.UpdateFrequency = UpdateFrequency.Update10;
     MyID = DateTime.UtcNow.ToString("ffff");
+
+    LCD.WriteText("ID: " + MyID + "\n", false);
 }
 
 public void Main(string argument, UpdateType updateSource)
@@ -136,6 +138,12 @@ public void start()
     foreach (var engine in Engines)
     {
         engine.ApplyAction("OnOff_On");
+    }
+
+    var smokeBlock = GridTerminalSystem.GetBlockWithName("SMOKE") as IMyTerminalBlock;
+    if (smokeBlock != null)
+    {
+        smokeBlock.ApplyAction("OnOff_On");
     }
 }
 
