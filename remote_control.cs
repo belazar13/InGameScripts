@@ -4,16 +4,21 @@ IMyRadioAntenna Antenna;
 
 MyDetectedEntityInfo DetectedObject;
 
+string tagChannel = "ch1";
+
 //Конструктор скрипта
 // ------------------------------------------
 
 public Program()
 {
-    //Находим блоки
+    Runtime.UpdateFrequency = UpdateFrequency.Update100;
+
     Camera = GridTerminalSystem.GetBlockWithName("Camera") as IMyCameraBlock;
     Camera.EnableRaycast = true;
     LCD = GridTerminalSystem.GetBlockWithName("LCD") as IMyTextPanel;
     Antenna = GridTerminalSystem.GetBlockWithName("ShipAntenna") as IMyRadioAntenna;
+
+    IGC.RegisterBroadcastListener(tagChannel);
 }
 
 //Главная функция
@@ -33,12 +38,15 @@ public void Main(string argument, UpdateType updateSource)
             Start();
             break;
     }
+
+    LCD.WriteText(argument + "\n", true);
+    LCD.WriteText(DateTime.Now.ToString(), true);
 }
 
 void Start()
 {
     string msg = "Start;";
-    Antenna.TransmitMessage(msg, MyTransmitTarget.Owned);
+    IGC.SendBroadcastMessage(tagChannel, msg, TransmissionDistance.TransmissionDistanceMax);
 }
 
 void Prepare()
@@ -48,7 +56,8 @@ void Prepare()
     msg += DetectedObject.Position.Y.ToString() + ";";
     msg += DetectedObject.Position.Z.ToString() + ";";
 
-    Antenna.TransmitMessage(msg, MyTransmitTarget.Owned);
+    //Antenna.TransmitMessage(msg, MyTransmitTarget.Owned);
+    IGC.SendBroadcastMessage(tagChannel, msg, TransmissionDistance.TransmissionDistanceMax);
     LCD.WriteText(msg, false);
 }
 

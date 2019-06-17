@@ -5,7 +5,7 @@ bool Stop = true;
 float GyroMult = 15f;
 int Tick;
 
-//Vector3D TestVector = new Vector3D(61174.3561, 373.8672, 86.4822);
+string tagChannel = "ch1";
 Vector3D TestVector;// = new Vector3D(61411.5216, 128.8047, -249.9993);
 
 public Program()
@@ -13,38 +13,52 @@ public Program()
     if (RemCon == null)
         RemCon = GridTerminalSystem.GetBlockWithName("RemCon") as IMyRemoteControl;
 
-    LCD = GridTerminalSystem.GetBlockWithName("LCD") as IMyTextPanel;
+    if (LCD == null)
+        LCD = GridTerminalSystem.GetBlockWithName("LCD") as IMyTextPanel;
 
-    Runtime.UpdateFrequency = UpdateFrequency.Update1;
+    IGC.RegisterBroadcastListener(tagChannel);
+    Runtime.UpdateFrequency = UpdateFrequency.Update100;
 }
 
 public void Main(string argument, UpdateType updateSource)
 {
-    if (updateSource == UpdateType.Antenna)
-    {
-        string[] msg = argument.Split(';');
+    List<IMyBroadcastListener> listeners = new List<IMyBroadcastListener>();
+    IGC.GetBroadcastListeners(listeners);
 
+    foreach (var listener in listeners)
+    {
+        if (!listener.HasPendingMessage)
+        {
+            continue;
+        }
+
+        MyIGCMessage message = listener.AcceptMessage();
+        string messagetext = message.Data.ToString();
+        string messagetag = message.Tag;
+
+        if (LCD != null)
+        {
+            LCD.WriteText("tag:" + messagetag + "\n", false);
+            LCD.WriteText("txt:" + messagetext + "\n", true);
+        }
+
+        string[] msg = messagetext.Split(';');
         switch (msg[0])
         {
             case "TorpedoLock":
                 TestVector = new Vector3D(Convert.ToDouble(msg[1]), Convert.ToDouble(msg[2]), Convert.ToDouble(msg[3]));
-                
                 if (LCD != null)
                 {
-                    LCD.WriteText("X" + TestVector.X + "\n", true);
-                    LCD.WriteText("Y" + TestVector.Y + "\n", true);
-                    LCD.WriteText("Z" + TestVector.Z + "\n", true);
+                    LCD.WriteText("X: " + TestVector.X + "\n", true);
+                    LCD.WriteText("Y: " + TestVector.Y + "\n", true);
+                    LCD.WriteText("Z: " + TestVector.Z + "\n", true);
+                    LCD.WriteText("V: " + TestVector.ToString() + "\n", true);
                 }
                 break;
             case "Start":
                 start();
                 break;
         }
-    }
-
-    if (argument == "testlcd")
-    {
-        LCD.WriteText("OKOKOK", false);
     }
 
     if (Tick++ < 120)
@@ -100,6 +114,8 @@ void SetGyroOverride(bool OverrideOnOff, Vector3D settings, float Power = 1f)
 public void start()
 {
     Stop = false;
+    Runtime.UpdateFrequency = UpdateFrequency.Update1;
+    Tick = 0;
 
     var Engines = new List<IMyTerminalBlock>();
     GridTerminalSystem.SearchBlocksOfName("MT", Engines);
@@ -108,10 +124,6 @@ public void start()
     {
         engine.ApplyAction("OnOff_On");
     }
-
-    //(GridTerminalSystem.GetBlockWithName("Link") as IMyTerminalBlock).ApplyAction("OnOff_Off");
-    //(GridTerminalSystem.GetBlockWithName("SMOKE") as IMyTerminalBlock).ApplyAction("OnOff_On");
-    Tick = 0;
 }
 
 public void stop()
