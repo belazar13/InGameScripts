@@ -1,6 +1,7 @@
 IMyCameraBlock Camera;
 IMyTextPanel LCD;
-IMyRadioAntenna Antenna;
+IMyTextPanel LCD2;
+//IMyRadioAntenna Antenna;
 
 MyDetectedEntityInfo DetectedObject;
 
@@ -16,7 +17,8 @@ public Program()
     Camera = GridTerminalSystem.GetBlockWithName("Camera") as IMyCameraBlock;
     Camera.EnableRaycast = true;
     LCD = GridTerminalSystem.GetBlockWithName("LCD") as IMyTextPanel;
-    Antenna = GridTerminalSystem.GetBlockWithName("ShipAntenna") as IMyRadioAntenna;
+    LCD2 = GridTerminalSystem.GetBlockWithName("LCD2") as IMyTextPanel;
+    //Antenna = GridTerminalSystem.GetBlockWithName("ShipAntenna") as IMyRadioAntenna;
 
     IGC.RegisterBroadcastListener(tagChannel);
 }
@@ -26,26 +28,57 @@ public Program()
 
 public void Main(string argument, UpdateType updateSource)
 {
-    switch (argument)
-    {
-        case "detect":
-            Detect();
-            break;
-        case "prepare":
-            Prepare();
-            break;
-        case "start":
-            Start();
-            break;
-    }
+    ProcessMessages();
 
-    LCD.WriteText(argument + "\n", true);
-    LCD.WriteText(DateTime.Now.ToString(), true);
+    string[] msg = argument.Split(';');
+
+    if (msg.Length == 1)
+    {
+        switch (argument)
+        {
+            case "detect":
+                Detect();
+                break;
+            case "prepare":
+                Prepare();
+                break;
+        }
+    }
+    else if (msg.Length == 2 && msg[0] == "start")
+    {
+        Start(msg[1]);
+    }
 }
 
-void Start()
+void ProcessMessages()
 {
-    string msg = "Start;";
+    List<IMyBroadcastListener> listeners = new List<IMyBroadcastListener>();
+    IGC.GetBroadcastListeners(listeners);
+
+    foreach (var listener in listeners)
+    {
+        while (listener.HasPendingMessage)
+        {
+            MyIGCMessage message = listener.AcceptMessage();
+            string messagetext = message.Data.ToString();
+            string messagetag = message.Tag;
+
+            string[] msg = messagetext.Split(';');
+            switch (msg[0])
+            {
+                case "TorpedoStatus":
+                    if (LCD2 != null)
+                    {
+                        LCD2.WriteText(msg[1] + " OK\n", true);
+                    }
+                    break;
+            }
+        }
+    }
+}
+void Start(string torpedoID)
+{
+    string msg = "Start;"+torpedoID;
     IGC.SendBroadcastMessage(tagChannel, msg, TransmissionDistance.TransmissionDistanceMax);
 }
 
@@ -59,6 +92,7 @@ void Prepare()
     //Antenna.TransmitMessage(msg, MyTransmitTarget.Owned);
     IGC.SendBroadcastMessage(tagChannel, msg, TransmissionDistance.TransmissionDistanceMax);
     LCD.WriteText(msg, false);
+    LCD2.WriteText("Torpedo status\n", false);
 }
 
 void Detect()

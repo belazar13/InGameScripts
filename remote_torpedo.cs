@@ -5,6 +5,8 @@ bool Stop = true;
 float GyroMult = 15f;
 int Tick;
 
+string MyID;
+
 string tagChannel = "ch1";
 Vector3D TestVector;// = new Vector3D(61411.5216, 128.8047, -249.9993);
 
@@ -17,49 +19,13 @@ public Program()
         LCD = GridTerminalSystem.GetBlockWithName("LCD") as IMyTextPanel;
 
     IGC.RegisterBroadcastListener(tagChannel);
-    Runtime.UpdateFrequency = UpdateFrequency.Update100;
+    Runtime.UpdateFrequency = UpdateFrequency.Update10;
+    MyID = DateTime.UtcNow.ToString("ffff");
 }
 
 public void Main(string argument, UpdateType updateSource)
 {
-    List<IMyBroadcastListener> listeners = new List<IMyBroadcastListener>();
-    IGC.GetBroadcastListeners(listeners);
-
-    foreach (var listener in listeners)
-    {
-        if (!listener.HasPendingMessage)
-        {
-            continue;
-        }
-
-        MyIGCMessage message = listener.AcceptMessage();
-        string messagetext = message.Data.ToString();
-        string messagetag = message.Tag;
-
-        if (LCD != null)
-        {
-            LCD.WriteText("tag:" + messagetag + "\n", false);
-            LCD.WriteText("txt:" + messagetext + "\n", true);
-        }
-
-        string[] msg = messagetext.Split(';');
-        switch (msg[0])
-        {
-            case "TorpedoLock":
-                TestVector = new Vector3D(Convert.ToDouble(msg[1]), Convert.ToDouble(msg[2]), Convert.ToDouble(msg[3]));
-                if (LCD != null)
-                {
-                    LCD.WriteText("X: " + TestVector.X + "\n", true);
-                    LCD.WriteText("Y: " + TestVector.Y + "\n", true);
-                    LCD.WriteText("Z: " + TestVector.Z + "\n", true);
-                    LCD.WriteText("V: " + TestVector.ToString() + "\n", true);
-                }
-                break;
-            case "Start":
-                start();
-                break;
-        }
-    }
+    ProcessMessages();
 
     if (Tick++ < 120)
     {
@@ -73,6 +39,59 @@ public void Main(string argument, UpdateType updateSource)
     else
     {
         SetGyroOverride(true, GetNavAngles(TestVector) * GyroMult);
+    }
+}
+
+void ProcessMessages()
+{
+    List<IMyBroadcastListener> listeners = new List<IMyBroadcastListener>();
+    IGC.GetBroadcastListeners(listeners);
+
+    foreach (var listener in listeners)
+    {
+        while (listener.HasPendingMessage)
+        {
+            MyIGCMessage message = listener.AcceptMessage();
+            string messagetext = message.Data.ToString();
+            string messagetag = message.Tag;
+
+            // if (LCD != null)
+            // {
+            //     LCD.WriteText("tag:" + messagetag + "\n", false);
+            //     LCD.WriteText("txt:" + messagetext + "\n", true);
+            // }
+
+            string[] msg = messagetext.Split(';');
+            switch (msg[0])
+            {
+                case "TorpedoLock":
+                    TestVector = new Vector3D(Convert.ToDouble(msg[1]), Convert.ToDouble(msg[2]), Convert.ToDouble(msg[3]));
+                    if (LCD != null)
+                    {
+                        LCD.WriteText("ID: " + MyID + "\n", false);
+                        LCD.WriteText("X: " + TestVector.X + "\n", true);
+                        LCD.WriteText("Y: " + TestVector.Y + "\n", true);
+                        LCD.WriteText("Z: " + TestVector.Z + "\n", true);
+                    }
+                    
+                    string okMessage = "TorpedoStatus;" + MyID;
+                    IGC.SendBroadcastMessage(tagChannel, okMessage, TransmissionDistance.TransmissionDistanceMax);
+
+                    break;
+                case "Start":
+                    if (MyID == msg[1])
+                    {
+                        start();
+                    }
+                    break;
+                case "TorpedoStatus":
+                    if (LCD != null)
+                    {
+                        LCD.WriteText("Torpedo: " + msg[1] + " OK\n", true);
+                    }
+                    break;
+            }
+        }
     }
 }
 
