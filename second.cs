@@ -3,8 +3,8 @@ bool Stop = true;
 float GyroMult = 15f;
 int Tick;
 
-Vector3D TestVector = new Vector3D(61174.3561, 373.8672, 86.4822);
-// Vector3D TestVector = new Vector3D(31411.5216, 128.8047, -249.9993);
+//Vector3D TestVector = new Vector3D(61174.3561, 373.8672, 86.4822);
+Vector3D TestVector = new Vector3D(61411.5216, 128.8047, -249.9993);
 
 public Program()
 {
