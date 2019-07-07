@@ -25,7 +25,7 @@ function Update(I)
     AMD = I:GetWeaponInfo(0)
     if (MW.Valid) then
         MDir = MW.AimPointPosition - AMD.GlobalPosition
-        I:AimWeaponInDirection(0, MDir.x, MDir.y, MDir.z, 0)
+        --I:AimWeaponInDirection(0, MDir.x, MDir.y, MDir.z, 0)
 
         targetVelocity = getTargetVelocity(MW)
 
@@ -38,7 +38,7 @@ function Update(I)
                 InerceptDir = FindInterceptVector(Rocket.Position,
                                                   Rocket.Velocity.magnitude,
                                                   MW.Position, targetVelocity)
-                if (RDir.magnitude < 100) then
+                if (RDir.magnitude < 200) then
                     InerceptDir = -ReflectK(Rocket.Velocity, InerceptDir, 5) -- отражаем скорость ракеты от желаемого направления. гасим инерцию
                 end
                 AimVec = InerceptDir + Rocket.Position

@@ -53,9 +53,9 @@ function Update(I)
       distance = math.sqrt(InterceptRange.x^2+InterceptRange.z^2+InterceptRange.y^2);
 
       if distance>200 then
-        I:SetLuaControlledMissileAimPoint(iTrans,iMissile,TrgNorm.x,50,TrgNorm.z)
+        I:SetLuaControlledMissileAimPoint(iTrans,iMissile,TrgNorm.x,-30,TrgNorm.z)
       else 
-        I:SetLuaControlledMissileAimPoint(iTrans,iMissile,InterceptPos.x,0,InterceptPos.z)
+        I:SetLuaControlledMissileAimPoint(iTrans,iMissile,InterceptPos.x,InterceptPos.y,InterceptPos.z)
         if distance < 8 then
           I:DetonateLuaControlledMissile(iTrans,iMissile) --если цель в радиусе 5м - подрыв (он на самом деле еще ближе произойдет)
         end
